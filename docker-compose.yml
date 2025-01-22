@@ -1,0 +1,97 @@
+services:
+  proxy:
+    build: ./infra/proxy
+    image: temporal-demo/proxy
+    deploy:
+      restart_policy:
+        condition: on-failure
+    env_file:
+      - ./env/proxy.env
+    ports:
+      - "8000:80"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - temporal-demo
+
+  temporal-ui:
+    image: temporalio/ui
+    deploy:
+      restart_policy:
+        condition: on-failure
+    env_file:
+      - ./env/temporal-ui.env
+    networks:
+      - temporal-demo
+    depends_on:
+      - temporal
+
+  temporal:
+    image: temporalio/auto-setup
+    deploy:
+      restart_policy:
+        condition: on-failure
+    env_file:
+      - ./env/temporal.env
+    ports:
+      - 7233:7233
+    networks:
+      - temporal-demo
+    depends_on:
+      - postgres
+
+  postgres:
+    build: ./infra/postgres
+    image: temporal-demo/postgres
+    deploy:
+      restart_policy:
+        condition: on-failure
+    env_file:
+      - ./env/postgres.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - temporal-demo
+
+  prometheus:
+    build: ./infra/prometheus
+    image: temporal-demo/prometheus
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - prometheus:/prometheus
+    networks:
+      - temporal-demo
+
+  grafana:
+    build: ./infra/grafana
+    image: temporal-demo/grafana
+    deploy:
+      restart_policy:
+        condition: on-failure
+    env_file:
+      - ./env/grafana.env
+    volumes:
+      - grafana:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - temporal-demo
+    depends_on:
+      - postgres
+      - prometheus
+
+networks:
+  temporal-demo:
+    name: temporal-demo
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres:
+  prometheus:
+  grafana:

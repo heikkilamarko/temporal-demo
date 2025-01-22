@@ -1,0 +1,32 @@
+{
+	admin off
+	auto_https off
+	skip_install_trust
+
+	log {
+		level {$CADDY_LOG_LEVEL}
+		format json {
+			time_format "rfc3339_nano"
+		}
+	}
+}
+
+:80 {
+	log
+
+	encode gzip
+
+	@temporal {
+		path /temporal /temporal/*
+	}
+	handle @temporal {
+		reverse_proxy http://temporal-ui:8080
+	}
+
+	@grafana {
+		path /grafana /grafana/*
+	}
+	handle @grafana {
+		reverse_proxy http://grafana:3000
+	}
+}
