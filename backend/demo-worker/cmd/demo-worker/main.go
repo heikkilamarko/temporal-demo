@@ -2,6 +2,7 @@ package main
 
 import (
 	"demo-worker/internal/counter"
+	"demo-worker/internal/todolist"
 	"log"
 	"os"
 
@@ -20,9 +21,10 @@ func main() {
 
 	defer c.Close()
 
-	w := worker.New(c, counter.TaskQueueName, worker.Options{})
+	w := worker.New(c, "demo_task_queue", worker.Options{})
 
 	w.RegisterWorkflow(counter.CounterWorkflow)
+	w.RegisterWorkflow(todolist.TodoListWorkflow)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {

@@ -2,10 +2,7 @@ module demo-worker
 
 go 1.24rc2
 
-require (
-	github.com/mitchellh/mapstructure v1.5.0
-	go.temporal.io/sdk v1.32.1
-)
+require go.temporal.io/sdk v1.32.1
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

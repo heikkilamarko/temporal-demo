@@ -1,14 +1,11 @@
 package counter
 
-import (
-	"github.com/mitchellh/mapstructure"
-	"go.temporal.io/sdk/workflow"
-)
+import "go.temporal.io/sdk/workflow"
 
 func CounterWorkflow(ctx workflow.Context, state Counter) (*CounterResult, error) {
 	logger := workflow.GetLogger(ctx)
 
-	logger.Info("start counter", "counter", state)
+	logger.Info("start workflow", "state", state)
 
 	if err := state.Validate(); err != nil {
 		return nil, err
@@ -21,23 +18,18 @@ func CounterWorkflow(ctx workflow.Context, state Counter) (*CounterResult, error
 		return nil, err
 	}
 
+	timerCtx, cancelTimer := workflow.WithCancel(ctx)
+
 	incrementCounterChannel := workflow.GetSignalChannel(ctx, "increment_counter")
 	resetCounterChannel := workflow.GetSignalChannel(ctx, "reset_counter")
 
 	selector := workflow.NewSelector(ctx)
 
 	selector.AddReceive(incrementCounterChannel, func(c workflow.ReceiveChannel, _ bool) {
-		var signal any
+		var signal IncrementCounterSignal
 		c.Receive(ctx, &signal)
 
-		var message IncrementCounterSignal
-		err := mapstructure.Decode(signal, &message)
-		if err != nil {
-			logger.Error("invalid signal type %v", err)
-			return
-		}
-
-		state.Increment(message.Value)
+		state.Increment(signal.Value)
 	})
 
 	selector.AddReceive(resetCounterChannel, func(c workflow.ReceiveChannel, _ bool) {
@@ -47,7 +39,7 @@ func CounterWorkflow(ctx workflow.Context, state Counter) (*CounterResult, error
 		state.Reset()
 	})
 
-	selector.AddFuture(workflow.NewTimer(ctx, state.TTLDuration), func(f workflow.Future) {
+	selector.AddFuture(workflow.NewTimer(timerCtx, state.TTLDuration), func(_ workflow.Future) {
 		state.SetExpired()
 	})
 
@@ -55,11 +47,12 @@ func CounterWorkflow(ctx workflow.Context, state Counter) (*CounterResult, error
 		selector.Select(ctx)
 
 		if state.IsReady() {
+			cancelTimer()
 			break
 		}
 	}
 
-	logger.Info("stop counter", "counter", state)
+	logger.Info("stop workflow", "state", state)
 
 	return &CounterResult{
 		Value:     state.Value,

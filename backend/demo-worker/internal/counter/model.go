@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-const TaskQueueName = "demo_counter"
-
 type Counter struct {
 	Name        string        `json:"name"`
 	MaxValue    int           `json:"max_value"`
