@@ -5,7 +5,7 @@ import "go.temporal.io/sdk/workflow"
 func CounterWorkflow(ctx workflow.Context, state Counter) (*CounterResult, error) {
 	logger := workflow.GetLogger(ctx)
 
-	logger.Info("start workflow", "state", state)
+	logger.Info("start workflow")
 
 	if err := state.Validate(); err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func CounterWorkflow(ctx workflow.Context, state Counter) (*CounterResult, error
 		}
 	}
 
-	logger.Info("stop workflow", "state", state)
+	logger.Info("stop workflow")
 
 	return &CounterResult{
 		Value:     state.Value,

@@ -1,11 +1,15 @@
 package todolist
 
-import "go.temporal.io/sdk/workflow"
+import (
+	"errors"
+
+	"go.temporal.io/sdk/workflow"
+)
 
 func TodoListWorkflow(ctx workflow.Context, state TodoList) (*TodoList, error) {
 	logger := workflow.GetLogger(ctx)
 
-	logger.Info("start workflow", "state", state)
+	logger.Info("start workflow")
 
 	err := workflow.SetQueryHandler(ctx, "get_todo_list", func() (TodoList, error) {
 		return state, nil
@@ -33,14 +37,20 @@ func TodoListWorkflow(ctx workflow.Context, state TodoList) (*TodoList, error) {
 	})
 
 	for {
-		selector.Select(ctx)
+		if err := ctx.Err(); errors.Is(err, workflow.ErrCanceled) {
+			logger.Info("workflow canceled")
+			return nil, err
+		}
 
 		if state.IsAllCompleted() {
+			logger.Info("all items are completed")
 			break
 		}
+
+		selector.Select(ctx)
 	}
 
-	logger.Info("stop workflow", "state", state)
+	logger.Info("stop workflow")
 
 	return &state, nil
 }
