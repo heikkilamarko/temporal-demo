@@ -29,6 +29,10 @@ func TodoListWorkflow(ctx workflow.Context, state TodoList) (*TodoList, error) {
 
 	selector := workflow.NewSelector(ctx)
 
+	selector.AddReceive(ctx.Done(), func(_ workflow.ReceiveChannel, _ bool) {
+		logger.Info("workflow context done")
+	})
+
 	selector.AddReceive(updateTodoItemChannel, func(c workflow.ReceiveChannel, _ bool) {
 		var signal UpdateTodoItemSignal
 		c.Receive(ctx, &signal)
