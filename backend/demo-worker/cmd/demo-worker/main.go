@@ -2,6 +2,7 @@ package main
 
 import (
 	"demo-worker/internal/counter"
+	"demo-worker/internal/historylimits"
 	"demo-worker/internal/todolist"
 	"log"
 	"os"
@@ -25,6 +26,8 @@ func main() {
 
 	w.RegisterWorkflow(counter.CounterWorkflow)
 	w.RegisterWorkflow(todolist.TodoListWorkflow)
+	w.RegisterWorkflow(historylimits.HistoryLimitsWorkflow)
+	w.RegisterActivity(historylimits.HistoryLimitsActivity)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
