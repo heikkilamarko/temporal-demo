@@ -1,2 +1,2 @@
-FROM timescale/timescaledb:latest-pg17
+FROM postgres:17
 COPY ./init.sql /docker-entrypoint-initdb.d/init.sql
